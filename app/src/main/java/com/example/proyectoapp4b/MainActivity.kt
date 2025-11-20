@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
             ProyectoApp4BTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
-                        name = "Pene",
+                        name = "Chucho's House",
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
