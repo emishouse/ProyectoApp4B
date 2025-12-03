@@ -1,0 +1,19 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+
+    <!-- Círculo -->
+    <path
+        android:fillColor="#666666"
+        android:pathData="M256,0C114.6,0 0,114.6 0,256s114.6,256 256,256 256,-114.6 256,-256S397.4,0 256,0z" />
+
+    <!-- S de SIGO estilizada -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M181,140l150,86 -150,86z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M331,366l-150,-86 150,-86z" />
+</vector>
