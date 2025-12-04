@@ -32,14 +32,22 @@ class LoginViewModel : ViewModel() {
     fun login() {
         if (user.value == "UTM241018TI" && pass.value == "EduardoTI18") {
             _loginState.value = LoginState.Success
-        } else if (user.value == "Chucho" && pass.value == "123"){
+        } else if (user.value == "Chucho" && pass.value == "123") {
             _loginState.value = LoginState.Success
-        }else if (user.value == "Humberto" && pass.value == "123"){
+        } else if (user.value == "Humberto" && pass.value == "123") {
             _loginState.value = LoginState.Success
-        }else if (user.value == "Mahal" && pass.value == "123"){
+        } else if (user.value == "Mahal" && pass.value == "123") {
             _loginState.value = LoginState.Success
         } else {
             _loginState.value = LoginState.Error
         }
     }
+
+    // 🔥 ESTA FUNCIÓN ES LA QUE FALTABA
+    fun resetLogin() {
+        _user.value = ""
+        _pass.value = ""
+        _loginState.value = LoginState.None
+    }
 }
+
