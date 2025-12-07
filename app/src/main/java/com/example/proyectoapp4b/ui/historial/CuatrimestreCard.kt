@@ -1,4 +1,3 @@
-// --- CuatrimestreCard.kt ---
 package com.example.proyectoapp4b.ui.historial
 
 import androidx.compose.foundation.layout.*
@@ -43,7 +42,6 @@ fun CuatrimestreCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Botón de agregar dentro del card
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
