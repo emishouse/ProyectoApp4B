@@ -17,6 +17,9 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.proyectoapp4b.ui.components.SigoTopBar
 
+// Reutilicé la data class Usuario y PerfilViewModel que ya tenías.
+// Asegúrate de que PerfilViewModel esté en el package com.example.proyectoapp4b.ui.perfil
+
 @Composable
 fun PerfilScreen(
     navController: NavController,
@@ -27,7 +30,7 @@ fun PerfilScreen(
 ) {
     val usuarioState by viewModel.usuario.collectAsState()
 
-    // Cargar datos iniciales
+    // Cargar datos iniciales al entrar
     LaunchedEffect(username) {
         viewModel.cargarPerfil(username)
     }
@@ -37,11 +40,20 @@ fun PerfilScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        // 🔵 TopBar reutilizada
+        // TopBar: al hacer logout además de ejecutar onLogout limpiamos la navegación
         SigoTopBar(
             username = username,
-            onLogout = onLogout,
-            onMenuPrincipal = onMenuPrincipal
+            onLogout = {
+                onLogout()
+                navController.navigate("login") {
+                    popUpTo(0) { inclusive = true }
+                }
+            },
+            onMenuPrincipal = {
+                navController.navigate("menu/$username") {
+                    popUpTo("menu/$username") { inclusive = true }
+                }
+            }
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -71,14 +83,14 @@ fun PerfilScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Sección: Información institucional
+        // Información institucional
         PerfilCard(title = "Información institucional") {
             PerfilField(label = "Usuario", value = usuarioState.usuario)
             PerfilField(label = "Correo institucional", value = usuarioState.correoInstitucional)
             PerfilField(label = "Contraseña", value = usuarioState.contrasena)
         }
 
-        // Sección: Datos personales
+        // Datos personales (editable)
         PerfilCard(title = "Datos personales") {
             OutlinedTextField(
                 value = usuarioState.nombre,
@@ -118,7 +130,7 @@ fun PerfilScreen(
             )
         }
 
-        // Sección: Identificadores oficiales
+        // Identificadores oficiales
         PerfilCard(title = "Identificadores") {
             OutlinedTextField(
                 value = usuarioState.curp,
@@ -134,7 +146,7 @@ fun PerfilScreen(
             )
         }
 
-        // Sección: Contacto
+        // Contacto
         PerfilCard(title = "Contacto") {
             OutlinedTextField(
                 value = usuarioState.telefono,
@@ -192,3 +204,5 @@ fun PerfilScreenPreview() {
         onMenuPrincipal = {}
     )
 }
+
+

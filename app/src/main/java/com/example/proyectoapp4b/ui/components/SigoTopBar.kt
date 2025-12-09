@@ -18,12 +18,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.proyectoapp4b.R
 
-// ✅ Versión para pantallas con usuario, logout y menú principal
 @Composable
 fun SigoTopBar(
     username: String,
     onLogout: () -> Unit,
-    onMenuPrincipal: () -> Unit
+    onMenuPrincipal: () -> Unit = {}   // 👈 YA ES OPCIONAL
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -34,7 +33,7 @@ fun SigoTopBar(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Logo + menú hamburguesa
+
         Row(verticalAlignment = Alignment.CenterVertically) {
             Image(
                 painter = painterResource(id = R.drawable.sigocel),
@@ -70,13 +69,11 @@ fun SigoTopBar(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // Usuario + logout
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Default.Person,
                 contentDescription = "Usuario",
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
+                tint = Color.White
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
@@ -85,49 +82,17 @@ fun SigoTopBar(
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.width(12.dp))
+
             IconButton(onClick = onLogout) {
                 Icon(
                     imageVector = Icons.Default.Logout,
                     contentDescription = "Cerrar sesión",
-                    tint = Color.White,
-                    modifier = Modifier.size(28.dp)
+                    tint = Color.White
                 )
             }
         }
     }
 }
 
-// ✅ Versión para pantallas con solo título y botón de regreso
-@Composable
-fun SigoTopBarWithBack(
-    title: String,
-    onBackClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF009688))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBackClick) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Regresar",
-                tint = Color.White,
-                modifier = Modifier.size(28.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        Text(
-            text = title,
-            color = Color.White,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
 
 

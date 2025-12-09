@@ -27,9 +27,9 @@ data class MateriaDetalle(
 fun DetalleCuatrimestreScreen(
     navController: NavController,
     numero: Int,
-    username: String = "Usuario",
-    onLogout: () -> Unit = { navController.navigate("login") },
-    onMenuPrincipal: () -> Unit = { navController.navigate("menu/$username") }
+    username: String,
+    onLogout: () -> Unit,
+    onMenuPrincipal: () -> Unit
 ) {
     val materias = listOf(
         MateriaDetalle(
@@ -53,13 +53,16 @@ fun DetalleCuatrimestreScreen(
         )
     )
 
-    val titulo = "Detalle del ${numero}º cuatrimestre"
-
     Scaffold(
         topBar = {
             SigoTopBar(
                 username = username,
-                onLogout = onLogout,
+                onLogout = {
+                    onLogout()
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
                 onMenuPrincipal = onMenuPrincipal
             )
         }
@@ -71,16 +74,17 @@ fun DetalleCuatrimestreScreen(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ✅ Título con flecha de regreso
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { navController.popBackStack() }) {
+                IconButton(onClick = {
+                    navController.popBackStack()
+                }) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        Icons.Default.ArrowBack,
                         contentDescription = "Regresar",
                         tint = MaterialTheme.colorScheme.primary
                     )
@@ -89,7 +93,7 @@ fun DetalleCuatrimestreScreen(
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Text(
-                    text = titulo,
+                    text = "Detalle del ${numero}º cuatrimestre",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -97,9 +101,7 @@ fun DetalleCuatrimestreScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize()
-            ) {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(materias) { materia ->
                     MateriaCard(materia)
                 }
@@ -131,3 +133,6 @@ fun MateriaCard(materia: MateriaDetalle) {
         }
     }
 }
+
+
+

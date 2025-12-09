@@ -1,4 +1,4 @@
-package com.example.proyectoapp4b.ui
+package com.example.proyectoapp4b.ui.login
 
 import android.app.Activity
 import androidx.compose.foundation.Image
@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,19 +31,19 @@ import com.example.proyectoapp4b.viewmodel.LoginViewModel
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel = viewModel(),
-    onLoginSuccess: (String) -> Unit = {}     // ← CAMBIADO: ahora recibe username
+    onLoginSuccess: (String) -> Unit = {},
+    onForgotPassword: () -> Unit = {}
 ) {
     val user by viewModel.user.collectAsState()
     val pass by viewModel.pass.collectAsState()
     val state by viewModel.loginState.collectAsState()
     val context = LocalContext.current
 
-    // 🔵 Mostrar/ocultar contraseña
     var passwordVisible by remember { mutableStateOf(false) }
 
-    // Si el login fue exitoso → enviar username
+    // Navegación si login exitoso
     if (state is LoginViewModel.LoginState.Success) {
-        onLoginSuccess(user)   // ← ENVÍA EL USUARIO REAL
+        onLoginSuccess(user)
     }
 
     Box(
@@ -50,8 +51,7 @@ fun LoginScreen(
             .fillMaxSize()
             .background(Color.White)
     ) {
-
-        // ❌ Botón cerrar app
+        // Botón cerrar app ❌
         IconButton(
             onClick = { (context as? Activity)?.finish() },
             modifier = Modifier
@@ -73,7 +73,6 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             // Logos
             Row(
                 horizontalArrangement = Arrangement.Center,
@@ -95,11 +94,40 @@ fun LoginScreen(
             }
 
             Spacer(modifier = Modifier.height(40.dp))
+            //Opción 2: Mensaje arriba del campo "Matrícula" (más visible desde el inicio)
+//Coloca este bloque justo antes del OutlinedTextField de matrícula:
 
-            // Usuario
+            if (state is LoginViewModel.LoginState.Error) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = "Advertencia",
+                            tint = Color(0xFFD32F2F),
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Matrícula o contraseña incorrectos",
+                            color = Color(0xFFD32F2F),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+            // Matrícula
             OutlinedTextField(
                 value = user,
-                onValueChange = { viewModel.onUserChange(it) },
+                onValueChange = {
+                    viewModel.onUserChange(it)
+                },
                 label = { Text("Matrícula") },
                 leadingIcon = {
                     Icon(imageVector = Icons.Default.Person, contentDescription = "Usuario")
@@ -110,12 +138,38 @@ fun LoginScreen(
                 shape = RoundedCornerShape(8.dp)
             )
 
+
+            // 🔴 Validación de matrícula
+            if (user.isNotEmpty() && user.length < 11) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = "Advertencia",
+                        tint = Color(0xFFD32F2F),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Matrícula no válida",
+                        color = Color(0xFFD32F2F),
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Start
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             // Contraseña
             OutlinedTextField(
                 value = pass,
-                onValueChange = { viewModel.onPassChange(it) },
+                onValueChange = {
+                    viewModel.onPassChange(it)
+                },
                 label = { Text("Contraseña") },
                 leadingIcon = {
                     Icon(imageVector = Icons.Default.Lock, contentDescription = "Contraseña")
@@ -150,7 +204,8 @@ fun LoginScreen(
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF009688)
-                )
+                ),
+                enabled = user.length >= 10 // 🔒 desactiva si matrícula no válida
             ) {
                 Text(
                     "Iniciar Sesión",
@@ -161,12 +216,46 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // ¿Olvidaste la contraseña?
             Text(
                 text = "¿Olvidaste la contraseña?",
                 color = Color.Gray,
-                modifier = Modifier.clickable { },
+                modifier = Modifier.clickable {
+                    onForgotPassword()
+                },
                 textAlign = TextAlign.Center
             )
+/*
+            // 🔴 Mensaje de error debajo
+            if (state is LoginViewModel.LoginState.Error) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = "Advertencia",
+                            tint = Color(0xFFD32F2F),
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Matrícula o contraseña incorrectos",
+                            color = Color(0xFFD32F2F),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+ */
+
+
+
         }
     }
 }

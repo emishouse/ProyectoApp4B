@@ -7,19 +7,18 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.proyectoapp4b.ui.LoginScreen
+import com.example.proyectoapp4b.ui.login.LoginScreen
 import com.example.proyectoapp4b.ui.menu.MenuScreen
 import com.example.proyectoapp4b.ui.historial.HistorialAcademicoScreen
 import com.example.proyectoapp4b.ui.historial.DetalleCuatrimestreScreen
-import com.example.proyectoapp4b.ui.perfil.PerfilScreen   // 👈 importa tu nueva pantalla
+import com.example.proyectoapp4b.ui.perfil.PerfilScreen
+import com.example.proyectoapp4b.ui.recuperar.RecuperarContrasenaScreen
 import com.example.proyectoapp4b.viewmodel.LoginViewModel
 
 @Composable
 fun AppNavHost() {
 
     val navController = rememberNavController()
-
-    // ViewModel compartido
     val loginViewModel: LoginViewModel = viewModel()
 
     NavHost(
@@ -35,7 +34,17 @@ fun AppNavHost() {
                     navController.navigate("menu/$username") {
                         popUpTo("login") { inclusive = true }
                     }
+                },
+                onForgotPassword = {
+                    navController.navigate("recuperar")
                 }
+            )
+        }
+
+        // RECUPERAR CONTRASEÑA
+        composable("recuperar") {
+            RecuperarContrasenaScreen(
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -44,7 +53,7 @@ fun AppNavHost() {
             "menu/{username}",
             arguments = listOf(navArgument("username") { type = NavType.StringType })
         ) { entry ->
-            val username = entry.arguments?.getString("username") ?: "Usuario"
+            val username = entry.arguments?.getString("username") ?: ""
 
             MenuScreen(
                 username = username,
@@ -57,13 +66,16 @@ fun AppNavHost() {
                 onNavigateModules = { module ->
                     when (module) {
                         "historial" -> navController.navigate("historial/$username")
-                        "perfil" -> navController.navigate("perfil/$username")   // 👈 ahora sí navega
-                        "kardex" -> {}
-                        "horario" -> {}
+                        "perfil" -> navController.navigate("perfil/$username")
                     }
                 },
-                onMenuPrincipal = {}
+                onMenuPrincipal = {
+                    navController.navigate("menu/$username") {
+                        popUpTo("menu/$username") { inclusive = true }
+                    }
+                }
             )
+
         }
 
         // HISTORIAL ACADÉMICO
@@ -71,10 +83,39 @@ fun AppNavHost() {
             "historial/{username}",
             arguments = listOf(navArgument("username") { type = NavType.StringType })
         ) { entry ->
-            val username = entry.arguments?.getString("username") ?: "Usuario"
+            val username = entry.arguments?.getString("username") ?: ""
 
             HistorialAcademicoScreen(
                 navController = navController,
+                username = username,
+                onLogout = {
+                    loginViewModel.resetLogin()
+                    navController.navigate("login") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                },
+                onMenuPrincipal = {
+                    navController.navigate("menu/$username") {
+                        popUpTo("menu/$username") { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // DETALLE DE CUATRIMESTRE
+        composable(
+            route = "detalleCuatrimestre/{numero}/{username}",
+            arguments = listOf(
+                navArgument("numero") { type = NavType.IntType },
+                navArgument("username") { type = NavType.StringType }
+            )
+        ) { entry ->
+            val numero = entry.arguments?.getInt("numero") ?: 0
+            val username = entry.arguments?.getString("username") ?: ""
+
+            DetalleCuatrimestreScreen(
+                navController = navController,
+                numero = numero,
                 username = username,
                 onLogout = {
                     loginViewModel.resetLogin()
@@ -95,7 +136,7 @@ fun AppNavHost() {
             "perfil/{username}",
             arguments = listOf(navArgument("username") { type = NavType.StringType })
         ) { entry ->
-            val username = entry.arguments?.getString("username") ?: "Usuario"
+            val username = entry.arguments?.getString("username") ?: ""
 
             PerfilScreen(
                 navController = navController,
@@ -113,16 +154,11 @@ fun AppNavHost() {
                 }
             )
         }
-
-        // DETALLE DEL CUATRIMESTRE (dinámico con parámetro)
-        composable(
-            "detalleCuatrimestre/{numero}",
-            arguments = listOf(navArgument("numero") { type = NavType.IntType })
-        ) { entry ->
-            val numero = entry.arguments?.getInt("numero") ?: 0
-            DetalleCuatrimestreScreen(navController = navController, numero = numero)
-        }
     }
 }
+
+
+
+
 
 

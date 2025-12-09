@@ -1,4 +1,4 @@
-package com.example.proyectoapp4b.ui.historial
+package com.example.proyectoapp4b.viewmodel
 
 import androidx.lifecycle.ViewModel
 import com.example.proyectoapp4b.model.Cuatrimestre

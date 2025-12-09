@@ -6,8 +6,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-// Data class con todos los campos del perfil
-data class Usuario(
+// Renombrada para no chocar con model.Usuario
+data class UsuarioPerfil(
     val usuario: String = "",
     val correoInstitucional: String = "",
     val contrasena: String = "",
@@ -25,18 +25,15 @@ data class Usuario(
 
 class PerfilViewModel : ViewModel() {
 
-    // Estado del perfil
-    private val _usuario = MutableStateFlow(Usuario())
-    val usuario: StateFlow<Usuario> = _usuario
+    private val _usuario = MutableStateFlow(UsuarioPerfil())
+    val usuario: StateFlow<UsuarioPerfil> = _usuario
 
-    // Simulación de carga desde API
     fun cargarPerfil(username: String) {
         viewModelScope.launch {
-            _usuario.value = Usuario(usuario = username)
+            _usuario.value = UsuarioPerfil(usuario = username)
         }
     }
 
-    // Funciones para actualizar cada campo
     fun actualizarUsuario(valor: String) { _usuario.value = _usuario.value.copy(usuario = valor) }
     fun actualizarCorreoInstitucional(valor: String) { _usuario.value = _usuario.value.copy(correoInstitucional = valor) }
     fun actualizarContrasena(valor: String) { _usuario.value = _usuario.value.copy(contrasena = valor) }

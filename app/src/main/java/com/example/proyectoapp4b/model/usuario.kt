@@ -1,18 +1,18 @@
 package com.example.proyectoapp4b.model
 
 data class Usuario(
-    val nombre: String = "",
-    val primerApellido: String = "",
-    val segundoApellido: String = "",
-    val fechaNacimiento: String = "",
-    val estadoNacimiento: String = "",
-    val sexo: String = "",
-    val curp: String = "",
-    val nss: String = "",
-    val telefono: String = "",
-    val correoAlternativo: String = "",
-    val correoInstitucional: String = "",
-    val usuario: String = "",
-    val perfil: String = "",
-    val estatusPerfil: String = ""
+    val nombre: String? = null,
+    val primerApellido: String? = null,
+    val segundoApellido: String? = null,
+    val fechaNacimiento: String? = null,
+    val estadoNacimiento: String? = null,
+    val sexo: String? = null,
+    val curp: String? = null,
+    val nss: String? = null,
+    val telefono: String? = null,
+    val correoAlternativo: String? = null,
+    val correoInstitucional: String? = null,
+    val usuario: String? = null,            // Matrícula o ID UTM
+    val perfil: String? = null,
+    val estatusPerfil: String? = null
 )
