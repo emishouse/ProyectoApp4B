@@ -1,112 +1,121 @@
 package com.example.proyectoapp4b.navigation
 
-/* ================================================================================================
-   IMPORTS
-   ================================================================================================
-   - androidx.compose.runtime.Composable
-       Permite crear funciones composables que construyen interfaces en Jetpack Compose.
-
-   - viewModel()
-       Obtiene o crea una instancia del ViewModel asociado al ciclo de vida del NavHost.
-
-   - NavHost, composable, navArgument, NavType
-       Componentes del sistema de navegación de Jetpack Compose. Permiten definir rutas,
-       argumentos y pantallas dentro del árbol de navegación.
-
-   - rememberNavController()
-       Crea y recuerda un NavController, que permite movernos entre pantallas.
-
-   - Pantallas de la app (LoginScreen, MenuScreen, etc.)
-       Se importan porque cada ruta del NavHost debe renderizar una pantalla específica.
-
-   - LoginViewModel
-       ViewModel encargado del manejo del estado y lógica del módulo de Login.
-   ================================================================================================ */
+// ----------------------------------------------------------------------------------------------
+// IMPORTS
+// ----------------------------------------------------------------------------------------------
 
 import androidx.compose.runtime.Composable
+// Permite crear funciones composables (pantallas, layouts, UI) en Compose.
+
 import androidx.lifecycle.viewmodel.compose.viewModel
+// Permite obtener un ViewModel dentro de un composable, sin recrearlo cada vez.
+
 import androidx.navigation.NavType
+// Define los tipos de argumentos en la navegación (String, Int, Bool, etc.)
+
 import androidx.navigation.compose.NavHost
+// Contenedor que administra toda la navegación y las rutas disponibles.
+
 import androidx.navigation.compose.composable
+// Permite crear una ruta dentro de NavHost.
+
 import androidx.navigation.compose.rememberNavController
+// Crea y recuerda un NavController para manejar la navegación.
+
 import androidx.navigation.navArgument
+// Permite declarar argumentos que acepta cada pantalla (ej. username, id).
+
 import com.example.proyectoapp4b.ui.login.LoginScreen
 import com.example.proyectoapp4b.ui.menu.MenuScreen
 import com.example.proyectoapp4b.ui.historial.HistorialAcademicoScreen
 import com.example.proyectoapp4b.ui.historial.DetalleCuatrimestreScreen
 import com.example.proyectoapp4b.ui.perfil.PerfilScreen
 import com.example.proyectoapp4b.ui.recuperar.RecuperarContrasenaScreen
+// Cada uno de estos son tus pantallas (UI) de la app.
+
 import com.example.proyectoapp4b.viewmodel.LoginViewModel
+// ViewModel que maneja la lógica del login (datos, validaciones, sesión).
 
 /**
  * AppNavHost
  * -----------------------------------------------------------------------------------------------
- * Define toda la estructura de navegación de la aplicación.
+ * Este archivo define TODA la navegación de la app.
  *
  * Contiene:
- *  - Controlador de navegación (NavController)
- *  - Todas las rutas disponibles
+ *  - El NavController que mueve al usuario entre pantallas
+ *  - Las rutas disponibles (login, menú, historial, perfil, etc.)
  *  - Los argumentos que recibe cada pantalla
- *  - Acciones de navegación (login, menú, historial, perfil, recuperar contraseña)
+ *  - Las acciones de navegación (login, logout, módulos)
  *
- * Es el "mapa" central de toda la app.
+ * Es el MAPA CENTRAL de la app.
  */
+
 @Composable
 fun AppNavHost() {
 
-    // Controlador que permite navegar entre pantallas.
+    // ------------------------------------------------------------------------------------------
+    // NAV CONTROLLER
+    // Es el "cerebro" de la navegación: permite moverse entre pantallas
+    // ------------------------------------------------------------------------------------------
     val navController = rememberNavController()
 
-    // ViewModel que se mantiene mientras la app esté abierta.
+    // ------------------------------------------------------------------------------------------
+    // VIEWMODEL DEL LOGIN
+    // Se mantiene vivo mientras la app está abierta
+    // No se recrea en cada pantalla
+    // ------------------------------------------------------------------------------------------
     val loginViewModel: LoginViewModel = viewModel()
 
-    /* --------------------------------------------------------------------------------------------
-       NavHost
-       - Indica cuál será la pantalla inicial (login)
-       - Define las rutas de la aplicación
-       -------------------------------------------------------------------------------------------- */
+    // ------------------------------------------------------------------------------------------
+    // NAVHOST
+    // startDestination = "login" → Pantalla principal
+    // Aquí definimos TODAS las rutas
+    // ------------------------------------------------------------------------------------------
     NavHost(
         navController = navController,
         startDestination = "login"
     ) {
 
-        /* ========================================================================================
-           LOGIN
-           ======================================================================================== */
+        // ======================================================================================
+        // LOGIN SCREEN
+        // ======================================================================================
         composable("login") {
 
-            // Renderiza la pantalla de login y define las acciones del usuario
             LoginScreen(
                 viewModel = loginViewModel,
 
-                // Cuando el login es exitoso, navega al menú enviando el username
+                // ----------------------------------------------------------
+                // LOGIN EXITOSO → IR AL MENU
+                //
+                // popUpTo("login") { inclusive = true }:
+                //   - Borra el login del historial
+                //   - Impide regresar con botón atrás
+                // ----------------------------------------------------------
                 onLoginSuccess = { username ->
                     navController.navigate("menu/$username") {
-                        popUpTo("login") { inclusive = true } // Evita regresar al login
+                        popUpTo("login") { inclusive = true }
                     }
                 },
 
-                // Navegación a la pantalla de recuperar contraseña
+                // Ir a la pantalla de recuperar contraseña
                 onForgotPassword = {
                     navController.navigate("recuperar")
                 }
             )
         }
 
-
-        /* ========================================================================================
-           RECUPERAR CONTRASEÑA
-           ======================================================================================== */
+        // ======================================================================================
+        // RECUPERAR CONTRASEÑA
+        // ======================================================================================
         composable("recuperar") {
             RecuperarContrasenaScreen(
-                onBack = { navController.popBackStack() } // Regresa a la pantalla anterior
+                onBack = { navController.popBackStack() } // ← Regresa una pantalla atrás
             )
         }
 
-
-        /* ========================================================================================
-           MENÚ PRINCIPAL
-           ======================================================================================== */
+        // ======================================================================================
+        // MENU PRINCIPAL
+        // ======================================================================================
         composable(
             "menu/{username}",
             arguments = listOf(navArgument("username") { type = NavType.StringType })
@@ -117,15 +126,24 @@ fun AppNavHost() {
             MenuScreen(
                 username = username,
 
-                // Cierra sesión y regresa al login
+                // ----------------------------------------------------------
+                // LOGOUT → REGRESAR AL LOGIN
+                //
+                // popUpTo("menu/{username}") no sirve, porque username cambia.
+                //
+                // Usamos popUpTo("menu") para borrar todo lo anterior y que
+                // NO SE PUEDA REGRESAR al menú con botón atrás.
+                // ----------------------------------------------------------
                 onLogout = {
                     loginViewModel.resetLogin()
+
                     navController.navigate("login") {
-                        popUpTo("login") { inclusive = true }
+                        // Limpia TODAS las pantallas relacionadas al menú
+                        popUpTo("menu/{username}") { inclusive = true }
                     }
                 },
 
-                // Redirige a módulos del menú (historial, perfil, etc.)
+                // Opciones del menú (Historial / Perfil)
                 onNavigateModules = { module ->
                     when (module) {
                         "historial" -> navController.navigate("historial/$username")
@@ -133,7 +151,7 @@ fun AppNavHost() {
                     }
                 },
 
-                // Regresar al menú principal desde otras pantallas
+                // Desde otras pantallas volver al menú principal
                 onMenuPrincipal = {
                     navController.navigate("menu/$username") {
                         popUpTo("menu/$username") { inclusive = true }
@@ -142,10 +160,9 @@ fun AppNavHost() {
             )
         }
 
-
-        /* ========================================================================================
-           HISTORIAL ACADÉMICO
-           ======================================================================================== */
+        // ======================================================================================
+        // HISTORIAL ACADÉMICO
+        // ======================================================================================
         composable(
             "historial/{username}",
             arguments = listOf(navArgument("username") { type = NavType.StringType })
@@ -157,6 +174,7 @@ fun AppNavHost() {
                 navController = navController,
                 username = username,
 
+                // Logout igual que antes
                 onLogout = {
                     loginViewModel.resetLogin()
                     navController.navigate("login") {
@@ -172,10 +190,9 @@ fun AppNavHost() {
             )
         }
 
-
-        /* ========================================================================================
-           DETALLE DE CUATRIMESTRE
-           ======================================================================================== */
+        // ======================================================================================
+        // DETALLE DE CUATRIMESTRE
+        // ======================================================================================
         composable(
             route = "detalleCuatrimestre/{numero}/{username}",
             arguments = listOf(
@@ -207,10 +224,9 @@ fun AppNavHost() {
             )
         }
 
-
-        /* ========================================================================================
-           PERFIL DEL USUARIO
-           ======================================================================================== */
+        // ======================================================================================
+        // PERFIL DEL USUARIO
+        // ======================================================================================
         composable(
             "perfil/{username}",
             arguments = listOf(navArgument("username") { type = NavType.StringType })
@@ -238,6 +254,7 @@ fun AppNavHost() {
         }
     }
 }
+
 
 /* ================================================================================================
    ¿CÓMO SE RELACIONA ESTE ARCHIVO CON EL RESTO DEL PROYECTO?

@@ -21,6 +21,8 @@ import androidx.compose.material3.Surface
 // Se usa como base visual para la UI.
 
 import com.example.proyectoapp4b.navigation.AppNavHost
+import com.example.proyectoapp4b.theme.AppTheme
+
 // Importa el NavHost personalizado de la app.
 // Encapsula la lógica de navegación entre pantallas.
 
@@ -36,17 +38,22 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Define el contenido de la actividad usando Compose.
         setContent {
-            // Surface: contenedor que aplica el color de fondo definido en el tema.
-            Surface(color = MaterialTheme.colorScheme.background) {
-                // AppNavHost: componente que gestiona la navegación entre pantallas.
-                // Se separó en un archivo independiente para mantener la arquitectura modular.
-                AppNavHost()   // 👈 AHORA EL NAVHOST ESTÁ SEPARADO
+
+            // 🔹 APLICAR TU THEME PERSONALIZADO AQUÍ
+            AppTheme {
+
+                // 🔹 Surface ahora sí usa TU background
+                Surface(color = MaterialTheme.colorScheme.background) {
+
+                    // 🔹 Tu Navigation Host
+                    AppNavHost()
+                }
             }
         }
     }
 }
+
 
 /**
  * Relación con el proyecto:

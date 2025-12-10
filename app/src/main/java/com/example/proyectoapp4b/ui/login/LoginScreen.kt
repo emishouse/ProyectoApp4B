@@ -41,47 +41,21 @@ fun LoginScreen(
     onLoginSuccess: (String) -> Unit = {},
     onForgotPassword: () -> Unit = {}
 ) {
-    // --- Suscripciones al estado expuesto por el ViewModel ---
-    // user: flujo/StateFlow con el valor actual del campo matrícula (String)
     val user by viewModel.user.collectAsState()
-
-    // pass: flujo/StateFlow con el valor actual del campo contraseña (String)
     val pass by viewModel.pass.collectAsState()
-
-    // state: flujo/StateFlow que representa el estado del proceso de login
-    // (por ejemplo: Idle, Loading, Success, Error). Se usa para mostrar mensajes/UX.
     val state by viewModel.loginState.collectAsState()
-
-    // Contexto actual de la composición — se usa para cerrar la Activity si se quiere.
     val context = LocalContext.current
-
-    // Control local para mostrar/ocultar la contraseña en el campo.
     var passwordVisible by remember { mutableStateOf(false) }
 
-    // ----------------------------
-    // NAVEGACIÓN AUTOMÁTICA: si el ViewModel indica Success se dispara el callback
-    // Esto evita que el botón haga la navegación y delega la decisión al estado.
-    // ----------------------------
     if (state is LoginViewModel.LoginState.Success) {
-        // Llamada inmediata para notificar a quien usa este composable que el login fue ok.
-        // onLoginSuccess suele llamar a navController.navigate("menu/$username")
         onLoginSuccess(user)
     }
 
-    // -------------------------------------------------------------------------
-    // Contenedor principal (Box) que ocupa toda la pantalla y aplica fondo blanco.
-    // Es el root visual de la pantalla de login.
-    // -------------------------------------------------------------------------
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background) // ✅ dinámico
     ) {
-        // -------------------------------------------------------
-        // Botón superior derecho para cerrar la app (ícono X)
-        // - Usa el context convertido a Activity para llamar finish().
-        // - Evita dependencias directas con la Activity en el ViewModel.
-        // -------------------------------------------------------
         // Botón cerrar app ❌
         IconButton(
             onClick = { (context as? Activity)?.finish() },
@@ -90,29 +64,20 @@ fun LoginScreen(
                 .padding(16.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.Close,      // Ícono X
+                imageVector = Icons.Default.Close,
                 contentDescription = "Cerrar",
-                tint = Color.Black,
-                modifier = Modifier.size(36.dp)         // Tamaño del ícono
+                tint = MaterialTheme.colorScheme.onBackground, // ✅ dinámico
+                modifier = Modifier.size(36.dp)
             )
         }
 
-        // ---------------------------------------------------------------------
-        // Columna central: logos, campos, validaciones, botón login y link
-        // - centrada verticalmente para UX amigable en pantallas grandes/pequeñas.
-        // ---------------------------------------------------------------------
         Column(
             modifier = Modifier
                 .padding(16.dp)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.Center,      // Centra verticalmente
+            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // --------------------------
-            // ROW: Logos SIGO y UTM lado a lado
-            // - PainterResource carga imágenes desde res/drawable.
-            // - Mantén las imágenes optimizadas (webp/png) para reducir APK size.
-            // --------------------------
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
@@ -124,7 +89,6 @@ fun LoginScreen(
                         .height(60.dp)
                         .padding(end = 12.dp)
                 )
-
                 Image(
                     painter = painterResource(id = R.drawable.utm),
                     contentDescription = "Logo UTM",
@@ -134,54 +98,34 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // ---------------------------------------------------------------------
-            // BLOQUE DE MENSAJE DE ERROR EN CASO DE CREDENCIALES INVÁLIDAS
-            // - Este bloque aparece arriba del campo matrícula para mayor visibilidad.
-            // - Se muestra cuando el ViewModel emitió LoginState.Error.
-            // ---------------------------------------------------------------------
-            //Opción 2: Mensaje arriba del campo "Matrícula" (más visible desde el inicio)
-            //Coloca este bloque justo antes del OutlinedTextField de matrícula:
-
             if (state is LoginViewModel.LoginState.Error) {
-                // Caja centrada con icono de advertencia + texto.
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.Warning,
                             contentDescription = "Advertencia",
-                            tint = Color(0xFFD32F2F),   // Rojo de error
+                            tint = MaterialTheme.colorScheme.error, // ✅ dinámico
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Matrícula o contraseña incorrectos",
-                            color = Color(0xFFD32F2F),
+                            color = MaterialTheme.colorScheme.error, // ✅ dinámico
                             fontWeight = FontWeight.Bold
                         )
                     }
                 }
             }
 
-            // --------------------------
-            // CAMPO: Matrícula (OutlinedTextField)
-            // - value viene del ViewModel y onValueChange delega al ViewModel.
-            // - shape RoundedCornerShape para look consistente con diseño Material.
-            // - Se recomienda validar la matrícula en el ViewModel también (no solo UI).
-            // --------------------------
             // Matrícula
             OutlinedTextField(
                 value = user,
-                onValueChange = {
-                    // Actualiza el estado en el ViewModel (source of truth).
-                    viewModel.onUserChange(it)
-                },
+                onValueChange = { viewModel.onUserChange(it) },
                 label = { Text("Matrícula") },
                 leadingIcon = {
                     Icon(imageVector = Icons.Default.Person, contentDescription = "Usuario")
@@ -192,13 +136,6 @@ fun LoginScreen(
                 shape = RoundedCornerShape(8.dp)
             )
 
-            // ---------------------------------------------------------------------
-            // VALIDACIÓN INMEDIATA EN UI PARA MATRÍCULA (feedback instantáneo)
-            // - Si el usuario ha empezado a escribir (isNotEmpty) y longitud < 11,
-            //   mostramos advertencia local. Esta validación complementa (no reemplaza)
-            //   la validación del ViewModel/Backend.
-            // ---------------------------------------------------------------------
-            // 🔴 Validación de matrícula
             if (user.isNotEmpty() && user.length < 11) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
@@ -208,13 +145,13 @@ fun LoginScreen(
                     Icon(
                         imageVector = Icons.Default.Warning,
                         contentDescription = "Advertencia",
-                        tint = Color(0xFFD32F2F),
+                        tint = MaterialTheme.colorScheme.error, // ✅ dinámico
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "Matrícula no válida",
-                        color = Color(0xFFD32F2F),
+                        color = MaterialTheme.colorScheme.error, // ✅ dinámico
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Start
                     )
@@ -223,25 +160,14 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --------------------------
-            // CAMPO: Contraseña (OutlinedTextField con visibilidad toggle)
-            // - leadingIcon: candado
-            // - trailingIcon: botón que alterna passwordVisible
-            // - visualTransformation: PasswordVisualTransformation oculta los caracteres
-            // --------------------------
-            // Contraseña
             OutlinedTextField(
                 value = pass,
-                onValueChange = {
-                    // Actualiza la contraseña en el ViewModel (no en local solamente).
-                    viewModel.onPassChange(it)
-                },
+                onValueChange = { viewModel.onPassChange(it) },
                 label = { Text("Contraseña") },
                 leadingIcon = {
                     Icon(imageVector = Icons.Default.Lock, contentDescription = "Contraseña")
                 },
                 trailingIcon = {
-                    // Botón con ícono personalizado (visibility / visibility_off)
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(
                             painter = painterResource(
@@ -262,13 +188,6 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --------------------------
-            // BOTÓN: Iniciar Sesión
-            // - Llama viewModel.login() que hace la lógica (repo/API).
-            // - enabled = user.length >= 10: deshabilita el botón si matrícula es corta.
-            // - Considerar manejar estado Loading para deshabilitar doble submit.
-            // --------------------------
-            // Botón iniciar sesión
             Button(
                 onClick = { viewModel.login() },
                 modifier = Modifier
@@ -276,63 +195,25 @@ fun LoginScreen(
                     .height(55.dp),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF009688)
+                    containerColor = MaterialTheme.colorScheme.primary,   // ✅ dinámico
+                    contentColor = MaterialTheme.colorScheme.onPrimary    // ✅ dinámico
                 ),
-                enabled = user.length >= 10 // 🔒 desactiva si matrícula no válida
+                enabled = user.length >= 10
             ) {
                 Text(
                     "Iniciar Sesión",
-                    color = Color.White,
                     fontWeight = FontWeight.Bold
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --------------------------
-            // LINK: Olvidé contraseña
-            // - clickable { onForgotPassword() } dispara callback para navegar a pantalla recuperar.
-            // - No hace validación; solo navega.
-            // --------------------------
-            // ¿Olvidaste la contraseña?
             Text(
                 text = "¿Olvidaste la contraseña?",
-                color = Color.Gray,
-                modifier = Modifier.clickable {
-                    onForgotPassword()
-                },
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f), // ✅ dinámico
+                modifier = Modifier.clickable { onForgotPassword() },
                 textAlign = TextAlign.Center
             )
-
-            /*
-                        // 🔴 Mensaje de error debajo
-                        if (state is LoginViewModel.LoginState.Error) {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Box(
-                                modifier = Modifier.fillMaxWidth(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Warning,
-                                        contentDescription = "Advertencia",
-                                        tint = Color(0xFFD32F2F),
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = "Matrícula o contraseña incorrectos",
-                                        color = Color(0xFFD32F2F),
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-                        }
-
-             */
-
         }
     }
 }
