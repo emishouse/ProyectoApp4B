@@ -33,7 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 // Modelo de datos Cuatrimestre, contiene número, periodo, grupo, tutor, etc.
-import com.example.proyectoapp4b.model.Cuatrimestre
+import com.example.proyectoapp4b.data.model.Cuatrimestre
 // ----------------------------------------------------------------------------------
 
 

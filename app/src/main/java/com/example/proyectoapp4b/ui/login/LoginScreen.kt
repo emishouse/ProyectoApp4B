@@ -5,7 +5,9 @@ import androidx.compose.foundation.Image      // Para mostrar imágenes en Compo
 import androidx.compose.foundation.background // Para aplicar colores de fondo a contenedores
 import androidx.compose.foundation.clickable  // Para hacer elementos clickeables
 import androidx.compose.foundation.layout.*   // Para usar Row, Column, Spacer, Box y padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape // Para bordes redondeados en campos y botones
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons  // Acceso al set de íconos por defecto
 import androidx.compose.material.icons.filled.Close // Ícono de X para cerrar app
 import androidx.compose.material.icons.filled.Lock  // Ícono de candado para contraseña
@@ -15,18 +17,20 @@ import androidx.compose.material3.*            // Componentes Material 3 (Button
 import androidx.compose.runtime.*              // Para estados con remember y mutableStateOf
 import androidx.compose.ui.Alignment           // Para alinear elementos en Column, Row, Box
 import androidx.compose.ui.Modifier            // Modificador general para COMPOSE
-import androidx.compose.ui.graphics.Color      // Manejo de colores personalizados
 import androidx.compose.ui.platform.LocalContext // Para obtener el contexto actual (Activity)
 import androidx.compose.ui.res.painterResource // Para cargar imágenes desde drawable
 import androidx.compose.ui.text.font.FontWeight // Para cambiar peso de texto (negritas)
 import androidx.compose.ui.text.input.PasswordVisualTransformation // Ocultar contraseña
 import androidx.compose.ui.text.input.VisualTransformation         // Mostrar/Ocultar contraseña
 import androidx.compose.ui.text.style.TextAlign // Alinear texto
-import androidx.compose.ui.tooling.preview.Preview // Para vista previa en Android Studio
 import androidx.compose.ui.unit.dp             // Para tamaños, márgenes y paddings en dp
-import androidx.lifecycle.viewmodel.compose.viewModel // Para obtener el ViewModel dentro de Compose
 import com.example.proyectoapp4b.R            // Acceso a recursos (logos, íconos)
 import com.example.proyectoapp4b.viewmodel.LoginViewModel // ViewModel que maneja login
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.zIndex
+import com.example.proyectoapp4b.data.model.UserResponse
 
 /* =======================================================================
    DOCUMENTACIÓN DETALLADA (línea a línea / bloque por bloque)
@@ -37,26 +41,25 @@ import com.example.proyectoapp4b.viewmodel.LoginViewModel // ViewModel que manej
 
 @Composable
 fun LoginScreen(
-    viewModel: LoginViewModel = viewModel(),
-    onLoginSuccess: (String) -> Unit = {},
+    viewModel: LoginViewModel,
+    onLoginSuccess: (user: UserResponse) -> Unit = {},
     onForgotPassword: () -> Unit = {}
 ) {
-    val user by viewModel.user.collectAsState()
-    val pass by viewModel.pass.collectAsState()
-    val state by viewModel.loginState.collectAsState()
-    val context = LocalContext.current
+    val uiState = viewModel.uiState.collectAsState().value
     var passwordVisible by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
-    if (state is LoginViewModel.LoginState.Success) {
-        onLoginSuccess(user)
+    // Si login fue exitoso, llamamos callback
+    if (uiState.loginSuccess && uiState.user != null) {
+        onLoginSuccess(uiState.user)
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background) // ✅ dinámico
+            .background(MaterialTheme.colorScheme.background)
     ) {
-        // Botón cerrar app ❌
+        // Botón cerrar app
         IconButton(
             onClick = { (context as? Activity)?.finish() },
             modifier = Modifier
@@ -66,7 +69,7 @@ fun LoginScreen(
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = "Cerrar",
-                tint = MaterialTheme.colorScheme.onBackground, // ✅ dinámico
+                tint = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.size(36.dp)
             )
         }
@@ -74,10 +77,12 @@ fun LoginScreen(
         Column(
             modifier = Modifier
                 .padding(16.dp)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()), // 🔹 habilita scroll
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // --- Logos ---
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
@@ -85,9 +90,7 @@ fun LoginScreen(
                 Image(
                     painter = painterResource(id = R.drawable.sigo),
                     contentDescription = "Logo SIGO",
-                    modifier = Modifier
-                        .height(60.dp)
-                        .padding(end = 12.dp)
+                    modifier = Modifier.height(60.dp).padding(end = 12.dp)
                 )
                 Image(
                     painter = painterResource(id = R.drawable.utm),
@@ -98,7 +101,8 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            if (state is LoginViewModel.LoginState.Error) {
+            // --- Mensaje de error ---
+            uiState.errorMessage?.let { error ->
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -109,34 +113,30 @@ fun LoginScreen(
                         Icon(
                             imageVector = Icons.Default.Warning,
                             contentDescription = "Advertencia",
-                            tint = MaterialTheme.colorScheme.error, // ✅ dinámico
+                            tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Matrícula o contraseña incorrectos",
-                            color = MaterialTheme.colorScheme.error, // ✅ dinámico
+                            text = error,
+                            color = MaterialTheme.colorScheme.error,
                             fontWeight = FontWeight.Bold
                         )
                     }
                 }
-            }
+            }//Cierre del
 
-            // Matrícula
+            // --- Usuario ---
             OutlinedTextField(
-                value = user,
-                onValueChange = { viewModel.onUserChange(it) },
+                value = uiState.username,
+                onValueChange = { viewModel.onUsernameChange(it) },
                 label = { Text("Matrícula") },
-                leadingIcon = {
-                    Icon(imageVector = Icons.Default.Person, contentDescription = "Usuario")
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp),
+                leadingIcon = { Icon(Icons.Default.Person, contentDescription = "Usuario") },
+                modifier = Modifier.fillMaxWidth().height(60.dp),
                 shape = RoundedCornerShape(8.dp)
             )
 
-            if (user.isNotEmpty() && user.length < 11) {
+            if (uiState.username.isNotEmpty() && uiState.username.length < 11) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -145,13 +145,13 @@ fun LoginScreen(
                     Icon(
                         imageVector = Icons.Default.Warning,
                         contentDescription = "Advertencia",
-                        tint = MaterialTheme.colorScheme.error, // ✅ dinámico
+                        tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "Matrícula no válida",
-                        color = MaterialTheme.colorScheme.error, // ✅ dinámico
+                        color = MaterialTheme.colorScheme.error,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Start
                     )
@@ -160,13 +160,12 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // --- Contraseña ---
             OutlinedTextField(
-                value = pass,
-                onValueChange = { viewModel.onPassChange(it) },
+                value = uiState.password,
+                onValueChange = { viewModel.onPasswordChange(it) },
                 label = { Text("Contraseña") },
-                leadingIcon = {
-                    Icon(imageVector = Icons.Default.Lock, contentDescription = "Contraseña")
-                },
+                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Contraseña") },
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(
@@ -180,49 +179,58 @@ fun LoginScreen(
                 },
                 visualTransformation = if (passwordVisible) VisualTransformation.None
                 else PasswordVisualTransformation(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp),
+                modifier = Modifier.fillMaxWidth().height(60.dp),
                 shape = RoundedCornerShape(8.dp)
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // --- Botón login ---
             Button(
                 onClick = { viewModel.login() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(55.dp),
+                modifier = Modifier.fillMaxWidth().height(55.dp),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,   // ✅ dinámico
-                    contentColor = MaterialTheme.colorScheme.onPrimary    // ✅ dinámico
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 ),
-                enabled = user.length >= 10
+                enabled = uiState.username.length >= 10 && !uiState.isLoading
             ) {
-                Text(
-                    "Iniciar Sesión",
-                    fontWeight = FontWeight.Bold
-                )
+                Text("Iniciar Sesión", fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = "¿Olvidaste la contraseña?",
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f), // ✅ dinámico
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                 modifier = Modifier.clickable { onForgotPassword() },
                 textAlign = TextAlign.Center
             )
         }
+
+        // 🔹 Indicador de carga con overlay opaco
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFF000000).copy(alpha = 0.6f))
+                    .zIndex(1f), // 🔹 asegura que esté encima
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    color = Color.White,
+                    strokeWidth = 5.dp
+                )
+            }
+        }
+
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun LoginPreview() {
-    LoginScreen()
-}
+
+
+
 
 /* =======================================================================
    BLOQUE FINAL: EJEMPLOS CONCRETOS DE CÓMO SE RELACIONA ESTE ARCHIVO

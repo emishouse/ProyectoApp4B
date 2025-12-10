@@ -1,4 +1,4 @@
-package com.example.proyectoapp4b.model
+package com.example.proyectoapp4b.data.model
 
 /**
  * Representa la información personal y académica básica del usuario autenticado.

@@ -1,4 +1,4 @@
-package com.example.proyectoapp4b.model
+package com.example.proyectoapp4b.data.model
 
 data class Cuatrimestre(
     val numero: Int? = null,          // identificador único del cuatrimestre

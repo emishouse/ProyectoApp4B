@@ -1,126 +1,125 @@
 package com.example.proyectoapp4b.viewmodel
-// Paquete que contiene los ViewModels de la aplicación.
-// "viewmodel" indica que pertenece a la capa de presentación (MVVM).
 
 import androidx.lifecycle.ViewModel
-// Clase base de Android para ViewModels.
-// Permite manejar lógica y estado desacoplado de la UI, sobreviviendo a cambios de configuración.
-
+import androidx.lifecycle.viewModelScope
+import com.example.proyectoapp4b.data.AuthRepository
+import com.example.proyectoapp4b.data.model.LoginRequest
+import com.example.proyectoapp4b.data.model.UserResponse
 import kotlinx.coroutines.flow.MutableStateFlow
-// Flujo mutable que permite emitir y actualizar valores.
-// Ideal para manejar estado reactivo en Compose.
-
 import kotlinx.coroutines.flow.StateFlow
-// Versión inmutable del flujo expuesto a la UI.
-// Garantiza que la UI solo observe y no modifique directamente el estado.
+import kotlinx.coroutines.launch
 
 /**
- * ViewModel encargado de manejar el estado de inicio de sesión.
+ * Estado de la interfaz de usuario para la pantalla de inicio de sesión.
  *
- * Responsabilidad: almacenar usuario, contraseña y estado de login,
- * exponiendo flujos inmutables para que la UI observe cambios.
- *
- * Patrón: MVVM. La UI observa los StateFlow y se actualiza automáticamente
- * cuando cambian los datos.
+ * @param username El nombre de usuario actual.
+ * @param password La contraseña actual.
+ * @param isLoading `true` si hay una operación de inicio de sesión en curso.
+ * @param loginSuccess `true` si el inicio de sesión fue exitoso.
+ * @param errorMessage Mensaje de error a mostrar, o `null` si no hay error.
+ * @param user La información del usuario si el inicio de sesión fue exitoso.
  */
-class LoginViewModel : ViewModel() {
+data class LoginUiState(
+    val username: String = "",
+    val password: String = "",
+    val isLoading: Boolean = false,
+    val loginSuccess: Boolean = false,
+    val errorMessage: String? = null,
+    val user: UserResponse? = null
+)
 
-    /** Estado interno mutable que contiene el nombre de usuario. */
-    private val _user = MutableStateFlow("")
-    /** Estado expuesto a la UI como flujo inmutable. */
-    val user: StateFlow<String> = _user
+/**
+ * ViewModel para la pantalla de inicio de sesión.
+ *
+ * Gestiona el estado de la UI (`LoginUiState`) y maneja la lógica de negocio
+ * para la autenticación del usuario a través del [AuthRepository].
+ *
+ * @param repository El repositorio para manejar la lógica de autenticación.
+ */
+class LoginViewModel(
+    private val repository: AuthRepository
+) : ViewModel() {
 
-    /** Estado interno mutable que contiene la contraseña. */
-    private val _pass = MutableStateFlow("")
-    /** Estado expuesto a la UI como flujo inmutable. */
-    val pass: StateFlow<String> = _pass
-
+    // Estado mutable interno que el ViewModel puede modificar
+    private val _uiState = MutableStateFlow(LoginUiState())
     /**
-     * Representa los posibles estados del proceso de login.
-     *
-     * - None: estado inicial o reseteado.
-     * - Success: credenciales correctas.
-     * - Error: credenciales incorrectas.
+     * Estado inmutable de la UI que se expone a la Vista para ser observado.
      */
-    sealed class LoginState {
-        object None : LoginState()
-        object Success : LoginState()
-        object Error : LoginState()
+    val uiState: StateFlow<LoginUiState> = _uiState
+
+    fun onUsernameChange(newUsername: String) {
+        _uiState.value = _uiState.value.copy(
+            username = newUsername.trim().uppercase(),
+            errorMessage = null
+        )
     }
 
-    /** Estado interno mutable que contiene el resultado del login. */
-    private val _loginState = MutableStateFlow<LoginState>(LoginState.None)
-    /** Estado expuesto a la UI como flujo inmutable. */
-    val loginState: StateFlow<LoginState> = _loginState
-
-    /**
-     * Actualiza el nombre de usuario.
-     *
-     * @param value Texto ingresado por el usuario.
-     *
-     * Detalles:
-     * - `trim()` elimina espacios al inicio y al final.
-     * - `uppercase()` convierte todo a mayúsculas.
-     * - Se resetea el estado de login a `None` para indicar que aún no se validó.
-     */
-    fun onUserChange(value: String) {
-        _user.value = value.trim().uppercase() // 🔠 convierte a mayúsculas
-        _loginState.value = LoginState.None   // 🔄 resetea estado al escribir
+    fun onPasswordChange(newPassword: String) {
+        _uiState.value = _uiState.value.copy(
+            password = newPassword.trim(),
+            errorMessage = null
+        )
     }
 
-    /**
-     * Actualiza la contraseña ingresada.
-     *
-     * @param value Texto ingresado por el usuario.
-     *
-     * Detalles:
-     * - `trim()` elimina espacios al inicio y al final.
-     * - Se resetea el estado de login a `None` para indicar que aún no se validó.
-     *
-     * Ejemplo de métodos relacionados:
-     * - string.trim() → elimina espacios en blanco al inicio y al final.
-     * - string.trimStart() → elimina solo al inicio.
-     * - string.trimEnd() → elimina solo al final.
-     */
-    fun onPassChange(value: String) {
-        _pass.value = value.trim()
-        _loginState.value = LoginState.None   // 🔄 resetea estado al escribir
-    }
-
-    /**
-     * Valida las credenciales ingresadas.
-     *
-     * Si las combinaciones de usuario y contraseña coinciden con las predefinidas,
-     * se actualiza el estado a `Success`. En caso contrario, se marca como `Error`.
-     *
-     * Nota: actualmente las credenciales están hardcodeadas para pruebas.
-     * En producción deberían validarse contra un repositorio o servicio seguro.
-     */
     fun login() {
-        if (user.value == "UTM241018TI" && pass.value == "EduardoTI18") {
-            _loginState.value = LoginState.Success
-        } else if (user.value == "UTM241017TI" && pass.value == "12345") {
-            _loginState.value = LoginState.Success
-        } else if (user.value == "UTM241016TI" && pass.value == "1234") {
-            _loginState.value = LoginState.Success
-        } else if (user.value == "UTM241015TI" && pass.value == "123") {
-            _loginState.value = LoginState.Success
-        } else {
-            _loginState.value = LoginState.Error
+        val usernameTrimmed = _uiState.value.username.trim().uppercase()
+        val passwordTrimmed = _uiState.value.password.trim()
+
+        if (usernameTrimmed.isBlank() || passwordTrimmed.isBlank()) {
+            _uiState.value = _uiState.value.copy(
+                errorMessage = "El usuario y la contraseña no pueden estar vacíos."
+            )
+            return
+        }
+
+        _uiState.value = _uiState.value.copy(
+            isLoading = true,
+            errorMessage = null,
+            loginSuccess = false
+        )
+
+        viewModelScope.launch {
+            val request = LoginRequest(
+                username = _uiState.value.username,
+                password = _uiState.value.password
+            )
+
+            val result = repository.login(request)
+
+            _uiState.value = result.fold(
+                onSuccess = { userResponse ->
+                    _uiState.value.copy(
+                        isLoading = false,
+                        loginSuccess = true,
+                        user = userResponse,
+                        errorMessage = null
+                    )
+                },
+                onFailure = { throwable ->
+                    //mensaje de error
+                    val errorMessage = if (throwable.message?.contains("401") == true) {
+                        "Error al iniciar sesión: Usuario o contraseña incorrectos (código: 401)"
+                    } else {
+                        throwable.message ?: "Error desconocido en la conexión."
+                    }
+
+                    _uiState.value.copy(
+                        isLoading = false,
+                        loginSuccess = false,
+                        errorMessage = errorMessage
+                    )
+                }
+            )
         }
     }
 
-    /**
-     * Resetea el estado de login y limpia los campos de usuario y contraseña.
-     *
-     * Uso: se invoca al cerrar sesión o al reiniciar el formulario.
-     */
-    fun resetLogin() {
-        _user.value = ""
-        _pass.value = ""
-        _loginState.value = LoginState.None
+    fun clearFields() {
+        _uiState.value = LoginUiState(errorMessage = null)
     }
 }
+
+
+
 
 /**
  * Relación con el proyecto:

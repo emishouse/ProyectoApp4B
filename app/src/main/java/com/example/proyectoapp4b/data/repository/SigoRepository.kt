@@ -2,11 +2,11 @@ package com.example.proyectoapp4b.data.repository
 
 // Importa el modelo Usuario, que representa los datos del usuario obtenido tras iniciar sesión.
 // Este modelo será retornado por la función login().
-import com.example.proyectoapp4b.model.Usuario
+import com.example.proyectoapp4b.data.model.Usuario
 
 // Importa el modelo Cuatrimestre, que representa cada periodo del historial académico.
 // Es utilizado por la función getHistorial() para devolver la lista de cuatrimestres.
-import com.example.proyectoapp4b.model.Cuatrimestre
+import com.example.proyectoapp4b.data.model.Cuatrimestre
 
 /**
  * Interfaz SigoRepository

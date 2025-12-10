@@ -2,7 +2,10 @@ package com.example.proyectoapp4b.ui.recuperar
 // Paquete que contiene la pantalla de recuperación de contraseña dentro de la capa UI.
 // "ui.recuperar" indica que pertenece al flujo de recuperación de credenciales.
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 // Importa componentes de layout (Column, Row, Spacer, etc.) y modificadores de tamaño/espaciado.
 
 import androidx.compose.material.icons.Icons
@@ -36,32 +39,18 @@ import androidx.compose.ui.unit.dp
 // Unidad de medida para dimensiones (density-independent pixels).
 
 @OptIn(ExperimentalMaterial3Api::class)
-// Opt-in para usar APIs experimentales de Material3 (TopAppBar).
 @Composable
-        /**
-         * Pantalla de recuperación de contraseña.
-         *
-         * @param onBack Acción que se ejecuta al presionar el botón de regresar.
-         *
-         * Responsabilidad: mostrar un formulario donde el usuario ingresa su matrícula
-         * y simular el envío de un correo con la contraseña.
-         */
 fun RecuperarContrasenaScreen(
     onBack: () -> Unit
 ) {
-    // Estado local para almacenar la matrícula ingresada.
     var matricula by remember { mutableStateOf("") }
-
-    // Estado local para indicar si el mensaje de confirmación ya fue enviado.
     var mensajeEnviado by remember { mutableStateOf(false) }
 
     Scaffold(
-        // Estructura base de la pantalla: incluye barra superior y contenido.
         topBar = {
             TopAppBar(
                 title = { Text("Recupera tu contraseña") },
                 navigationIcon = {
-                    // Botón de navegación para regresar a la pantalla anterior.
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
@@ -70,50 +59,47 @@ fun RecuperarContrasenaScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White, // Fondo blanco en el TopAppBar.
-                    titleContentColor = Color.Black, // Texto negro en el título.
-                    navigationIconContentColor = Color.Black // Ícono negro.
+                    containerColor = MaterialTheme.colorScheme.background, // 🔹 Fondo del tema
+                    titleContentColor = MaterialTheme.colorScheme.onBackground,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onBackground
                 )
             )
         },
-        containerColor = Color.White // Fondo blanco en todo el Scaffold.
+        containerColor = MaterialTheme.colorScheme.background // 🔹 Fondo del tema
     ) { innerPadding ->
 
         Column(
             modifier = Modifier
-                .padding(innerPadding) // Respeta padding interno del Scaffold.
-                .padding(24.dp) // Margen adicional alrededor del contenido.
-                .fillMaxSize(), // Ocupa todo el espacio disponible.
-            verticalArrangement = Arrangement.Top, // Elementos alineados arriba.
-            horizontalAlignment = Alignment.CenterHorizontally // Centrado horizontal.
+                .padding(innerPadding)
+                .padding(24.dp)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()), // 🔹 Scroll habilitado
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Text(
                 text = "Ingresa tu nombre de usuario y te enviaremos un correo electrónico con tu contraseña.",
                 style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center // Texto centrado.
+                textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(24.dp)) // Espacio entre elementos.
+            Spacer(modifier = Modifier.height(24.dp))
 
             OutlinedTextField(
-                value = matricula, // Valor actual del campo.
-                onValueChange = { matricula = it }, // Actualiza estado al escribir.
-                label = { Text("Matrícula") }, // Etiqueta del campo.
-                modifier = Modifier.fillMaxWidth() // Ocupa todo el ancho.
+                value = matricula,
+                onValueChange = { matricula = it },
+                label = { Text("Matrícula") },
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = {
-                    // Simula envío de correo: activa mensaje de confirmación.
-                    mensajeEnviado = true
-                },
+                onClick = { mensajeEnviado = true },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF009688), // Fondo verde.
-                    contentColor = Color.White // Texto blanco.
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
                 Text("Enviar correo")
@@ -123,8 +109,8 @@ fun RecuperarContrasenaScreen(
                 Spacer(modifier = Modifier.height(20.dp))
                 Text(
                     text = "✔ Se ha enviado un correo con tu contraseña.",
-                    color = MaterialTheme.colorScheme.primary, // Color primario del tema.
-                    fontWeight = FontWeight.Bold // Texto en negritas.
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
                 )
             }
         }

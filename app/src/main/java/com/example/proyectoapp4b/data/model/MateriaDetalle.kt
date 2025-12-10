@@ -1,4 +1,4 @@
-package com.example.proyectoapp4b.model
+package com.example.proyectoapp4b.data.model
 
 /**
  * Clase que representa el detalle completo de una materia dentro del historial

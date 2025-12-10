@@ -5,6 +5,9 @@ package com.example.proyectoapp4b.navigation
 // ----------------------------------------------------------------------------------------------
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 // Permite crear funciones composables (pantallas, layouts, UI) en Compose.
 
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,6 +26,9 @@ import androidx.navigation.compose.rememberNavController
 // Crea y recuerda un NavController para manejar la navegación.
 
 import androidx.navigation.navArgument
+import com.example.proyectoapp4b.data.AuthRepository
+import com.example.proyectoapp4b.data.local.TokenManager
+import com.example.proyectoapp4b.di.LoginViewModelFactory
 // Permite declarar argumentos que acepta cada pantalla (ej. username, id).
 
 import com.example.proyectoapp4b.ui.login.LoginScreen
@@ -52,208 +58,141 @@ import com.example.proyectoapp4b.viewmodel.LoginViewModel
 
 @Composable
 fun AppNavHost() {
+    val context = LocalContext.current
 
-    // ------------------------------------------------------------------------------------------
-    // NAV CONTROLLER
-    // Es el "cerebro" de la navegación: permite moverse entre pantallas
-    // ------------------------------------------------------------------------------------------
+    // Creamos el repositorio
+    val repository = AuthRepository(TokenManager(context))
+
+    // Creamos ViewModel usando Factory
+    val loginViewModel: LoginViewModel = viewModel(
+        factory = LoginViewModelFactory(repository)
+    )
+
     val navController = rememberNavController()
 
-    // ------------------------------------------------------------------------------------------
-    // VIEWMODEL DEL LOGIN
-    // Se mantiene vivo mientras la app está abierta
-    // No se recrea en cada pantalla
-    // ------------------------------------------------------------------------------------------
-    val loginViewModel: LoginViewModel = viewModel()
-
-    // ------------------------------------------------------------------------------------------
-    // NAVHOST
-    // startDestination = "login" → Pantalla principal
-    // Aquí definimos TODAS las rutas
-    // ------------------------------------------------------------------------------------------
     NavHost(
         navController = navController,
         startDestination = "login"
     ) {
-
-        // ======================================================================================
-        // LOGIN SCREEN
-        // ======================================================================================
         composable("login") {
-
             LoginScreen(
                 viewModel = loginViewModel,
-
-                // ----------------------------------------------------------
-                // LOGIN EXITOSO → IR AL MENU
-                //
-                // popUpTo("login") { inclusive = true }:
-                //   - Borra el login del historial
-                //   - Impide regresar con botón atrás
-                // ----------------------------------------------------------
-                onLoginSuccess = { username ->
-                    navController.navigate("menu/$username") {
+                onLoginSuccess = { user ->
+                    navController.navigate("menu/${user.username}") {
                         popUpTo("login") { inclusive = true }
                     }
                 },
-
-                // Ir a la pantalla de recuperar contraseña
-                onForgotPassword = {
-                    navController.navigate("recuperar")
-                }
+                onForgotPassword = { navController.navigate("recuperar") }
             )
         }
 
-        // ======================================================================================
-        // RECUPERAR CONTRASEÑA
-        // ======================================================================================
         composable("recuperar") {
-            RecuperarContrasenaScreen(
-                onBack = { navController.popBackStack() } // ← Regresa una pantalla atrás
-            )
+            RecuperarContrasenaScreen(onBack = { navController.popBackStack() })
         }
 
-        // ======================================================================================
-        // MENU PRINCIPAL
-        // ======================================================================================
         composable(
             "menu/{username}",
             arguments = listOf(navArgument("username") { type = NavType.StringType })
         ) { entry ->
 
-            val username = entry.arguments?.getString("username") ?: ""
+            val uiState by loginViewModel.uiState.collectAsState()
+            val user = uiState.user
 
             MenuScreen(
-                username = username,
-
-                // ----------------------------------------------------------
-                // LOGOUT → REGRESAR AL LOGIN
-                //
-                // popUpTo("menu/{username}") no sirve, porque username cambia.
-                //
-                // Usamos popUpTo("menu") para borrar todo lo anterior y que
-                // NO SE PUEDA REGRESAR al menú con botón atrás.
-                // ----------------------------------------------------------
+                username = user?.username ?: "",
+                personFullName = user?.personFullName ?: "",
+                email = user?.email ?: "",
+                profileName = user?.profileName ?: "",
+                accessModule = user?.accessModule?: "",
+                personId = user?.personId ?: 0,
+                id = user?.id ?: 0,
+                register = user?.register ?: "",
+                roles = user?.roles ?: listOf(),
+                active = user?.active?: false,
+                termsConditions = user?.termsConditions?: false,
                 onLogout = {
-                    loginViewModel.resetLogin()
-
+                    loginViewModel.clearFields()
                     navController.navigate("login") {
-                        // Limpia TODAS las pantallas relacionadas al menú
                         popUpTo("menu/{username}") { inclusive = true }
                     }
                 },
-
-                // Opciones del menú (Historial / Perfil)
                 onNavigateModules = { module ->
                     when (module) {
-                        "historial" -> navController.navigate("historial/$username")
-                        "perfil" -> navController.navigate("perfil/$username")
+                        "historial" -> navController.navigate("historial/${user?.username}")
+                        "perfil" -> navController.navigate("perfil/${user?.username}")
                     }
                 },
-
-                // Desde otras pantallas volver al menú principal
                 onMenuPrincipal = {
-                    navController.navigate("menu/$username") {
-                        popUpTo("menu/$username") { inclusive = true }
+                    navController.navigate("menu/${user?.username}") {
+                        popUpTo("menu/${user?.username}") { inclusive = true }
                     }
                 }
             )
+
         }
 
-        // ======================================================================================
-        // HISTORIAL ACADÉMICO
-        // ======================================================================================
+
         composable(
             "historial/{username}",
             arguments = listOf(navArgument("username") { type = NavType.StringType })
         ) { entry ->
-
             val username = entry.arguments?.getString("username") ?: ""
-
             HistorialAcademicoScreen(
                 navController = navController,
                 username = username,
-
-                // Logout igual que antes
                 onLogout = {
-                    loginViewModel.resetLogin()
-                    navController.navigate("login") {
-                        popUpTo("login") { inclusive = true }
-                    }
+                    loginViewModel.clearFields()
+                    navController.navigate("login") { popUpTo("login") { inclusive = true } }
                 },
-
                 onMenuPrincipal = {
-                    navController.navigate("menu/$username") {
-                        popUpTo("menu/$username") { inclusive = true }
-                    }
+                    navController.navigate("menu/$username") { popUpTo("menu/$username") { inclusive = true } }
                 }
             )
         }
 
-        // ======================================================================================
-        // DETALLE DE CUATRIMESTRE
-        // ======================================================================================
         composable(
-            route = "detalleCuatrimestre/{numero}/{username}",
+            "detalleCuatrimestre/{numero}/{username}",
             arguments = listOf(
                 navArgument("numero") { type = NavType.IntType },
                 navArgument("username") { type = NavType.StringType }
             )
         ) { entry ->
-
             val numero = entry.arguments?.getInt("numero") ?: 0
             val username = entry.arguments?.getString("username") ?: ""
-
             DetalleCuatrimestreScreen(
                 navController = navController,
                 numero = numero,
                 username = username,
-
                 onLogout = {
-                    loginViewModel.resetLogin()
-                    navController.navigate("login") {
-                        popUpTo("login") { inclusive = true }
-                    }
+                    loginViewModel.clearFields()
+                    navController.navigate("login") { popUpTo("login") { inclusive = true } }
                 },
-
                 onMenuPrincipal = {
-                    navController.navigate("menu/$username") {
-                        popUpTo("menu/$username") { inclusive = true }
-                    }
+                    navController.navigate("menu/$username") { popUpTo("menu/$username") { inclusive = true } }
                 }
             )
         }
 
-        // ======================================================================================
-        // PERFIL DEL USUARIO
-        // ======================================================================================
         composable(
             "perfil/{username}",
             arguments = listOf(navArgument("username") { type = NavType.StringType })
         ) { entry ->
-
             val username = entry.arguments?.getString("username") ?: ""
-
             PerfilScreen(
                 navController = navController,
                 username = username,
-
                 onLogout = {
-                    loginViewModel.resetLogin()
-                    navController.navigate("login") {
-                        popUpTo("login") { inclusive = true }
-                    }
+                    loginViewModel.clearFields()
+                    navController.navigate("login") { popUpTo("login") { inclusive = true } }
                 },
-
                 onMenuPrincipal = {
-                    navController.navigate("menu/$username") {
-                        popUpTo("menu/$username") { inclusive = true }
-                    }
+                    navController.navigate("menu/$username") { popUpTo("menu/$username") { inclusive = true } }
                 }
             )
         }
     }
 }
+
 
 
 /* ================================================================================================

@@ -64,6 +64,18 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.2")
 
+    // Logging para ver las peticiones/respuestas (opcional pero muy útil)
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+
+    // ViewModel - Compose Integration
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+
+    // Navigation Compose
+    implementation("androidx.navigation:navigation-compose:2.7.5")
+
+    // DataStore (Preferences DataStore)
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+
     // Version Catalog (libs)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -75,6 +87,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.datastore.core)
+    implementation(libs.androidx.datastore.preferences.core)
 
     // Tests
     testImplementation(libs.junit)
@@ -85,4 +99,6 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+
 }

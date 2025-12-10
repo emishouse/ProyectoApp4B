@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 // Clase base de Android para ViewModels.
 // Permite manejar lógica y estado desacoplado de la UI, sobreviviendo a cambios de configuración.
 
-import com.example.proyectoapp4b.model.Cuatrimestre
+import com.example.proyectoapp4b.data.model.Cuatrimestre
 // Importa el modelo de datos Cuatrimestre.
 // Representa la información académica de un periodo escolar.
 
