@@ -1,6 +1,8 @@
 package com.example.proyectoapp4b.ui.login
 
 import android.app.Activity                   // Permite cerrar la actividad actual (finish())
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image      // Para mostrar imágenes en Compose
 import androidx.compose.foundation.background // Para aplicar colores de fondo a contenedores
 import androidx.compose.foundation.clickable  // Para hacer elementos clickeables
@@ -31,6 +33,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.zIndex
 import com.example.proyectoapp4b.data.model.UserResponse
+import com.example.proyectoapp4b.findActivity
 
 /* =======================================================================
    DOCUMENTACIÓN DETALLADA (línea a línea / bloque por bloque)
@@ -43,11 +46,13 @@ import com.example.proyectoapp4b.data.model.UserResponse
 fun LoginScreen(
     viewModel: LoginViewModel,
     onLoginSuccess: (user: UserResponse) -> Unit = {},
-    onForgotPassword: () -> Unit = {}
+    onForgotPassword: () -> Unit = {},
+    onCloseApp: () -> Unit = {}
 ) {
     val uiState = viewModel.uiState.collectAsState().value
     var passwordVisible by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val activity = context.findActivity()
 
     // Si login fue exitoso, llamamos callback
     if (uiState.loginSuccess && uiState.user != null) {
@@ -59,12 +64,16 @@ fun LoginScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Botón cerrar app
+        // 🔹 Botón cerrar app SIEMPRE encima de todo
         IconButton(
-            onClick = { (context as? Activity)?.finish() },
+            onClick = {
+                Log.d("LoginScreen", "Botón X presionado, intentando cerrar app")
+                activity?.finishAffinity()
+            },
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(16.dp)
+                .zIndex(2f) // ✅ más alto que el overlay
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
@@ -74,11 +83,13 @@ fun LoginScreen(
             )
         }
 
+        // 🔹 Contenido principal
         Column(
             modifier = Modifier
                 .padding(16.dp)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()), // 🔹 habilita scroll
+                .verticalScroll(rememberScrollState())
+                .zIndex(1f), // debajo del botón
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -124,7 +135,7 @@ fun LoginScreen(
                         )
                     }
                 }
-            }//Cierre del
+            }
 
             // --- Usuario ---
             OutlinedTextField(
@@ -209,13 +220,13 @@ fun LoginScreen(
             )
         }
 
-        // 🔹 Indicador de carga con overlay opaco
+        // 🔹 Overlay de carga
         if (uiState.isLoading) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color(0xFF000000).copy(alpha = 0.6f))
-                    .zIndex(1f), // 🔹 asegura que esté encima
+                    .zIndex(1.5f), // debajo del botón
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(
@@ -224,7 +235,6 @@ fun LoginScreen(
                 )
             }
         }
-
     }
 }
 

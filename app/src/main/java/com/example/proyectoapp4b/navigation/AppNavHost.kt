@@ -29,6 +29,7 @@ import androidx.navigation.navArgument
 import com.example.proyectoapp4b.data.AuthRepository
 import com.example.proyectoapp4b.data.local.TokenManager
 import com.example.proyectoapp4b.di.LoginViewModelFactory
+import com.example.proyectoapp4b.findActivity
 // Permite declarar argumentos que acepta cada pantalla (ej. username, id).
 
 import com.example.proyectoapp4b.ui.login.LoginScreen
@@ -74,15 +75,18 @@ fun AppNavHost() {
         navController = navController,
         startDestination = "login"
     ) {
-        composable("login") {
+        composable(route = "login") {
+            val activity = context.findActivity() // ✅ obtiene la Activity real
+
             LoginScreen(
                 viewModel = loginViewModel,
                 onLoginSuccess = { user ->
-                    navController.navigate("menu/${user.username}") {
-                        popUpTo("login") { inclusive = true }
+                    navController.navigate(route = "menu/${user.username}") {
+                        popUpTo(route = "login") { inclusive = true }
                     }
                 },
-                onForgotPassword = { navController.navigate("recuperar") }
+                onForgotPassword = { navController.navigate(route = "recuperar") },
+                onCloseApp = { activity?.finishAffinity() } // ✅ cierra la app completa
             )
         }
 
