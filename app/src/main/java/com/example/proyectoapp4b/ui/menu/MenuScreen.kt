@@ -83,7 +83,7 @@ fun MenuScreen(
                 Text("Consulta y edita tu información personal.")
             }
         }
-
+/*
         Spacer(modifier = Modifier.height(12.dp))
         // Datos básicos (Nombre, Usuario, Email)
         Card(
@@ -107,6 +107,8 @@ fun MenuScreen(
                 Text("Términos y condiciones: ${if (termsConditions) "Aceptados" else "No aceptados"}", style = MaterialTheme.typography.bodyLarge)
             }
         }
+
+ */
     }
 }
 

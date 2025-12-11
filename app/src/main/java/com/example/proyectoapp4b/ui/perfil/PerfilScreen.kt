@@ -1,6 +1,7 @@
 package com.example.proyectoapp4b.ui.perfil
 // Paquete donde vive esta pantalla. Organiza lógicamente todas las pantallas relacionadas con el perfil del usuario.
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 // Importa los elementos de layout básicos (Column, Row, Spacer, etc.)
 
@@ -11,7 +12,9 @@ import androidx.compose.foundation.verticalScroll
 // Habilita el comportamiento de scroll vertical dentro de un layout.
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
 // Importa el icono de flecha hacia atrás para el botón de navegación.
 
 import androidx.compose.material3.*
@@ -24,9 +27,11 @@ import androidx.compose.ui.Alignment
 // Controla alineaciones dentro de filas y columnas.
 
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 // Permite aplicar configuraciones visuales y de interacción a los composables (padding, fillMaxSize, etc).
 
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 // Permite definir pesos/tipos de estilo tipográfico (Bold, Medium, etc.)
 
 import androidx.compose.ui.tooling.preview.Preview
@@ -53,42 +58,43 @@ import com.example.proyectoapp4b.ui.components.SigoTopBar
 
 @Composable
 fun PerfilScreen(
-    navController: NavController,        // Controlador de navegación para moverse entre pantallas.
-    username: String,                    // Nombre de usuario actual, recibido desde el login o menú.
-    onLogout: () -> Unit,                // Acción ejecutada al cerrar sesión.
-    onMenuPrincipal: () -> Unit,         // Acción para volver al menú principal.
-    viewModel: PerfilViewModel = viewModel()   // ViewModel que maneja los datos del perfil.
+    navController: NavController,
+    username: String,
+    personFullName: String,
+    email: String,
+    profileName: String,
+    accessModule: String,
+    personId: Int,
+    id: Int,
+    register: String,
+    roles: List<String>,
+    active: Boolean,
+    termsConditions: Boolean,
+    onLogout: () -> Unit,
+    onMenuPrincipal: () -> Unit,
+    viewModel: PerfilViewModel = viewModel()
 ) {
-
     val usuarioState by viewModel.usuario.collectAsState()
-    // Se obtiene el estado del usuario desde el ViewModel. collectAsState convierte el Flow en un estado observable por Compose.
 
-
-    // Cargar datos iniciales al entrar
     LaunchedEffect(username) {
         viewModel.cargarPerfil(username)
-        // Ejecuta la carga de datos del perfil cuando el username cambia o la pantalla inicia.
     }
 
     Column(
         modifier = Modifier
-            .fillMaxSize()                   // Ocupa toda la pantalla.
-            .verticalScroll(rememberScrollState())  // Permite desplazamiento vertical.
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
     ) {
-
-        // TopBar: al hacer logout además de ejecutar onLogout limpiamos la navegación
+        // ✅ TopBar institucional con logout y navegación
         SigoTopBar(
-            username = username,           // Muestra el usuario en la barra superior.
+            username = username,
             onLogout = {
-                onLogout()                // Ejecuta la acción externa de cierre de sesión.
-
-                // Limpia el historial para evitar volver atrás después del logout.
+                onLogout()
                 navController.navigate("login") {
                     popUpTo(0) { inclusive = true }
                 }
             },
             onMenuPrincipal = {
-                // Navega al menú asegurando que no se acumulen pantallas previas.
                 navController.navigate("menu/$username") {
                     popUpTo("menu/$username") { inclusive = true }
                 }
@@ -97,182 +103,60 @@ fun PerfilScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-
+        // 🔙 Flecha + título
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically   // Centra el contenido de la fila.
+            verticalAlignment = Alignment.CenterVertically
         ) {
-
             IconButton(onClick = { navController.popBackStack() }) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,    // Flecha hacia atrás.
+                    imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Regresar",
-                    tint = MaterialTheme.colorScheme.primary   // Color del ícono.
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
 
             Spacer(modifier = Modifier.width(8.dp))
 
             Text(
-                text = "Mi Perfil",                            // Título de pantalla.
-                style = MaterialTheme.typography.titleLarge,   // Estilo grande.
-                fontWeight = FontWeight.Bold                   // Negrita.
+                text = "Mi Perfil",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
             )
         }
+
 
 
         Spacer(modifier = Modifier.height(16.dp))
 
-
-        // Información institucional
-        PerfilCard(title = "Información institucional") {
-            // Campo mostrado en modo lectura
-            PerfilField(label = "Usuario", value = usuarioState.usuario)
-
-            PerfilField(label = "Correo institucional", value = usuarioState.correoInstitucional)
-
-            PerfilField(label = "Contraseña", value = usuarioState.contrasena)
-            // Estos datos vienen solo del servidor o del ViewModel.
-        }
-
-
-        // Datos personales (editable)
-        PerfilCard(title = "Datos personales") {
-
-            OutlinedTextField(
-                value = usuarioState.nombre,                    // Nombre actual.
-                onValueChange = { viewModel.actualizarNombre(it) }, // Actualiza en ViewModel.
-                label = { Text("Nombre") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = usuarioState.primerApellido,
-                onValueChange = { viewModel.actualizarPrimerApellido(it) },
-                label = { Text("Primer apellido") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = usuarioState.segundoApellido,
-                onValueChange = { viewModel.actualizarSegundoApellido(it) },
-                label = { Text("Segundo apellido") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = usuarioState.fechaNacimiento,
-                onValueChange = { viewModel.actualizarFechaNacimiento(it) },
-                label = { Text("Fecha de nacimiento") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = usuarioState.estadoNacimiento,
-                onValueChange = { viewModel.actualizarEstadoNacimiento(it) },
-                label = { Text("Estado de nacimiento") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = usuarioState.sexo,
-                onValueChange = { viewModel.actualizarSexo(it) },
-                label = { Text("Sexo") },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
-
-        // Identificadores oficiales
-        PerfilCard(title = "Identificadores") {
-
-            OutlinedTextField(
-                value = usuarioState.curp,
-                onValueChange = { viewModel.actualizarCurp(it) },
-                label = { Text("CURP") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = usuarioState.nss,
-                onValueChange = { viewModel.actualizarNss(it) },
-                label = { Text("Número de Seguridad Social") },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
-
-        // Contacto
-        PerfilCard(title = "Contacto") {
-
-            OutlinedTextField(
-                value = usuarioState.telefono,
-                onValueChange = { viewModel.actualizarTelefono(it) },
-                label = { Text("Teléfono") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = usuarioState.correoAlternativo,
-                onValueChange = { viewModel.actualizarCorreoAlternativo(it) },
-                label = { Text("Correo alternativo") },
-                modifier = Modifier.fillMaxWidth()
-            )
+        // Datos básicos (Nombre, Usuario, Email)
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            elevation = CardDefaults.cardElevation(0.dp), // 🔹 sin sombra
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent) // 🔹 sin fondo
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Nombre: $personFullName", style = MaterialTheme.typography.bodyLarge)
+                Text("Usuario: $username", style = MaterialTheme.typography.bodyLarge)
+                Text("Email: $email", style = MaterialTheme.typography.bodyLarge)
+                Text("Perfil: $profileName", style = MaterialTheme.typography.bodyLarge)
+                Text("Módulo: $accessModule", style = MaterialTheme.typography.bodyLarge)
+                Text("Roles: ${roles.joinToString(", ")}", style = MaterialTheme.typography.bodyLarge)
+                Text("ID Persona: $personId", style = MaterialTheme.typography.bodyLarge)
+                Text("ID Registro: $id", style = MaterialTheme.typography.bodyLarge)
+                Text("Usuario activo: ${if (active) "Sí" else "No"}", style = MaterialTheme.typography.bodyLarge)
+                Text("Fecha de registro: $register", style = MaterialTheme.typography.bodyLarge)
+                Text("Términos y condiciones: ${if (termsConditions) "Aceptados" else "No aceptados"}", style = MaterialTheme.typography.bodyLarge)
+            }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
     }
-}
-
-
-
-@Composable
-fun PerfilCard(title: String, content: @Composable ColumnScope.() -> Unit) {
-    // Contenedor reutilizable con estilo de tarjeta para agrupar secciones del perfil.
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = title, style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            content() // Inserta el contenido específico pasado como parámetro.
-        }
-    }
-}
-
-
-
-@Composable
-fun PerfilField(label: String, value: String) {
-    // Campo de lectura simple compuesto por etiqueta y valor.
-    Column(modifier = Modifier.padding(vertical = 4.dp)) {
-        Text(text = label, style = MaterialTheme.typography.bodySmall)
-        Text(
-            text = if (value.isEmpty()) "—" else value, // Muestra guion si no hay datos.
-            style = MaterialTheme.typography.bodyMedium
-        )
-    }
-}
-
-
-
-@Preview(showBackground = true)
-@Composable
-fun PerfilScreenPreview() {
-    // Crea un NavController simulado para la vista previa.
-    val navController = rememberNavController()
-
-    PerfilScreen(
-        navController = navController,
-        username = "UsuarioDemo",
-        onLogout = {},
-        onMenuPrincipal = {}
-    )
 }
 /**
  * RELACIÓN DE ESTA PANTALLA CON EL RESTO DEL PROYECTO

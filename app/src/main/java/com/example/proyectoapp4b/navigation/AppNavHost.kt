@@ -87,7 +87,11 @@ fun AppNavHost() {
         }
 
         composable("recuperar") {
-            RecuperarContrasenaScreen(onBack = { navController.popBackStack() })
+            val uiState by loginViewModel.uiState.collectAsState()
+            val user = uiState.user
+
+            RecuperarContrasenaScreen(
+                onBack = { navController.popBackStack() })
         }
 
         composable(
@@ -178,9 +182,21 @@ fun AppNavHost() {
             arguments = listOf(navArgument("username") { type = NavType.StringType })
         ) { entry ->
             val username = entry.arguments?.getString("username") ?: ""
+            val uiState by loginViewModel.uiState.collectAsState()
+            val user = uiState.user
             PerfilScreen(
                 navController = navController,
-                username = username,
+                username = user?.username ?: "",
+                personFullName = user?.personFullName ?: "",
+                email = user?.email ?: "",
+                profileName = user?.profileName ?: "",
+                accessModule = user?.accessModule?: "",
+                personId = user?.personId ?: 0,
+                id = user?.id ?: 0,
+                register = user?.register ?: "",
+                roles = user?.roles ?: listOf(),
+                active = user?.active?: false,
+                termsConditions = user?.termsConditions?: false,
                 onLogout = {
                     loginViewModel.clearFields()
                     navController.navigate("login") { popUpTo("login") { inclusive = true } }
